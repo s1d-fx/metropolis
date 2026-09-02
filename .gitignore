@@ -219,3 +219,6 @@ __marimo__/
 
 .DS_Store
 *.blend1
+
+# Obsidian
+.obsidian/
