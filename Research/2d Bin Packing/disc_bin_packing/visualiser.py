@@ -50,6 +50,7 @@ class GridPackingVisualiser:
         self._random = Random()
         self._updating_weights = False
         self._syncing_numeric_inputs = False
+        self._repack_timer = None
         colours = plt.get_cmap("tab10")
         self.module_colours = {
             size: colours(index / max(1, len(MODULE_SIZES) - 1))
@@ -181,6 +182,24 @@ class GridPackingVisualiser:
         text_box.set_val(str(int(value)))
         self._syncing_numeric_inputs = False
 
+    def _schedule_repack(self) -> None:
+        """Coalesce rapid slider changes into one deferred repack."""
+        if self._repack_timer is None:
+            self._repack_timer = self.figure.canvas.new_timer(interval=120)
+            self._repack_timer.single_shot = True
+            self._repack_timer.add_callback(self._run_scheduled_repack)
+        self._repack_timer.stop()
+        self._repack_timer.start()
+
+    def _cancel_scheduled_repack(self) -> None:
+        if self._repack_timer is not None:
+            self._repack_timer.stop()
+
+    def _run_scheduled_repack(self) -> None:
+        if self._repack_timer is not None:
+            self._repack_timer.stop()
+        self.redraw(reset_step=True)
+
     def _on_numeric_input_submitted(
         self, slider: Slider, text_box: TextBox, text: str
     ) -> None:
@@ -198,7 +217,7 @@ class GridPackingVisualiser:
 
     def _on_bin_size_changed(self, _: float) -> None:
         self.bin = GridBin(int(self.width_slider.val), int(self.height_slider.val))
-        self.redraw(reset_step=True)
+        self._schedule_repack()
 
     def _on_generation_changed(self, _: float) -> None:
         if self._updating_weights:
@@ -207,26 +226,31 @@ class GridPackingVisualiser:
         if not any(slider.val for slider in self.weight_sliders.values()):
             self.weight_sliders[MODULE_SIZES[0]].set_val(1)
         self._updating_weights = False
-        self._regenerate_modules()
+        self._schedule_repack()
 
     def _on_regenerate_clicked(self, _: object) -> None:
+        self._cancel_scheduled_repack()
         self._regenerate_modules()
 
     def _on_algorithm_changed(self, algorithm_name: str) -> None:
+        self._cancel_scheduled_repack()
         self.algorithm_name = algorithm_name
         self.redraw(reset_step=True)
 
     def _on_previous_clicked(self, _: object) -> None:
         self.visible_placements = max(0, self.visible_placements - 1)
-        self._draw_current_result()
+        self._draw_bin()
+        self.figure.canvas.draw_idle()
 
     def _on_next_clicked(self, _: object) -> None:
         self.visible_placements = min(len(self.result.placements), self.visible_placements + 1)
-        self._draw_current_result()
+        self._draw_bin()
+        self.figure.canvas.draw_idle()
 
     def _on_show_all_clicked(self, _: object) -> None:
         self.visible_placements = len(self.result.placements)
-        self._draw_current_result()
+        self._draw_bin()
+        self.figure.canvas.draw_idle()
 
     def _regenerate_modules(self) -> None:
         weights = {size: int(slider.val) for size, slider in self.weight_sliders.items()}
