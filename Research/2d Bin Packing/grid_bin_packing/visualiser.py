@@ -52,8 +52,34 @@ class GridPackingVisualiser:
         )
         self.figure.subplots_adjust(bottom=0.50, wspace=0.30)
         self.figure.suptitle("Discrete Grid Module Packing", fontsize=16)
-        self.stats_text = self.figure.text(0.08, 0.465, "", family="monospace", va="top")
-        self.step_text = self.figure.text(0.69, 0.465, "", va="top")
+        self.stats_text = self.figure.text(
+            0.08,
+            0.465,
+            "",
+            family="monospace",
+            fontsize=9,
+            va="top",
+            linespacing=1.35,
+            bbox={
+                "boxstyle": "round,pad=0.5",
+                "facecolor": "white",
+                "edgecolor": "0.75",
+                "alpha": 0.95,
+            },
+        )
+        self.step_text = self.figure.text(
+            0.69,
+            0.465,
+            "",
+            fontsize=9,
+            va="top",
+            bbox={
+                "boxstyle": "round,pad=0.5",
+                "facecolor": "white",
+                "edgecolor": "0.75",
+                "alpha": 0.95,
+            },
+        )
 
         self._build_controls()
         self.redraw(reset_step=True)
@@ -224,18 +250,25 @@ class GridPackingVisualiser:
 
     def _draw_statistics(self) -> None:
         requested_cells = sum(module.cell_count for module in self.modules)
+        utilisation = self.result.utilisation(self.bin)
+
         self.stats_text.set_text(
-            f"Algorithm: {self.algorithm.name}    "
-            f"Modules: {len(self.modules)}    "
-            f"Requested cells: {requested_cells}    "
-            f"Module cells: {self.result.requested_module_cells}    "
-            f"1×1 fillers: {self.result.filler_cells}    "
-            f"Occupied cells: {self.result.occupied_cells}/{self.bin.cell_count}    "
-            f"Utilisation: {self.result.utilisation(self.bin):.1%}    "
-            f"Runtime: {self.result.runtime_ms:.3f} ms"
+            "\n".join(
+                (
+                    f"Algorithm:       {self.algorithm.name}",
+                    f"Modules:         {len(self.modules)}",
+                    f"Requested cells: {requested_cells}",
+                    f"Module cells:    {self.result.requested_module_cells}",
+                    f"1×1 fillers:     {self.result.filler_cells}",
+                    f"Occupied cells:  {self.result.occupied_cells}/{self.bin.cell_count}",
+                    f"Utilisation:     {utilisation:.1%}",
+                    f"Runtime:          {self.result.runtime_ms:.3f} ms",
+                )
+            )
         )
         self.step_text.set_text(
-            f"Showing {self.visible_placements}/{len(self.result.placements)} placements"
+            f"Showing placements:\n"
+            f"{self.visible_placements}/{len(self.result.placements)}"
         )
 
     def show(self) -> None:
