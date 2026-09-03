@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from grid_bin_packing.models import GridBin, Module
+from disc_bin_packing.models import GridBin, Module
 
 
 class OccupancyGrid:

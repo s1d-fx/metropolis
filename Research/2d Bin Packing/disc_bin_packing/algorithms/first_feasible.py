@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from grid_bin_packing.algorithms.base import GridPackingAlgorithm
-from grid_bin_packing.grid import OccupancyGrid
-from grid_bin_packing.models import GridBin, GridPackingResult, GridPlacement, Module
+from disc_bin_packing.algorithms.base import GridPackingAlgorithm
+from disc_bin_packing.grid import OccupancyGrid
+from disc_bin_packing.models import GridBin, GridPackingResult, GridPlacement, Module
 
 
 class FirstFeasibleAlgorithm(GridPackingAlgorithm):

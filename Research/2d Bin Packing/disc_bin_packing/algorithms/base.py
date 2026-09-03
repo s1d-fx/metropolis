@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from grid_bin_packing.models import GridBin, GridPackingResult, Module
+from disc_bin_packing.models import GridBin, GridPackingResult, Module
 
 
 class GridPackingAlgorithm(ABC):

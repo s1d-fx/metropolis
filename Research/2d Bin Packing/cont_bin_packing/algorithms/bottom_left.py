@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from bin_packing.algorithms.base import PackingAlgorithm
-from bin_packing.models import Bin, PackingResult, Placement, Rectangle
+from cont_bin_packing.algorithms.base import PackingAlgorithm
+from cont_bin_packing.models import Bin, PackingResult, Placement, Rectangle
 
 
 class BottomLeftAlgorithm(PackingAlgorithm):

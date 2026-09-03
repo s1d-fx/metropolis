@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from random import Random
 
-from grid_bin_packing.models import MODULE_SIZES, Module, ModuleSize
+from disc_bin_packing.models import MODULE_SIZES, Module, ModuleSize
 
 
 def generate_modules(

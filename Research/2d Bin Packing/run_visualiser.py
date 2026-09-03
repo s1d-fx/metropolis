@@ -2,10 +2,10 @@
 
 from random import Random
 
-from bin_packing.algorithms import BottomLeftAlgorithm, NoPackingAlgorithm
-from bin_packing.generation import generate_rectangles
-from bin_packing.models import Bin
-from bin_packing.visualiser import PackingVisualiser
+from cont_bin_packing.algorithms import BottomLeftAlgorithm, NoPackingAlgorithm
+from cont_bin_packing.generation import generate_rectangles
+from cont_bin_packing.models import Bin
+from cont_bin_packing.visualiser import PackingVisualiser
 
 
 def main() -> None:

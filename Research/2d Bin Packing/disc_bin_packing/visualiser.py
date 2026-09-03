@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch, Rectangle as RectanglePatch
 from matplotlib.widgets import Button, RadioButtons, Slider, TextBox
 
-from grid_bin_packing.algorithms.base import GridPackingAlgorithm
-from grid_bin_packing.generation import generate_modules
-from grid_bin_packing.models import (
+from disc_bin_packing.algorithms.base import GridPackingAlgorithm
+from disc_bin_packing.generation import generate_modules
+from disc_bin_packing.models import (
     MODULE_SIZES,
     GridBin,
     GridPackingResult,
@@ -321,8 +321,7 @@ class GridPackingVisualiser:
                     f"Utilisation:     {utilisation:.1%}",
                     f"Runtime:          {self.result.runtime_ms:.3f} ms",
                 )
-            )
-        )
+            )        )
         self.step_text.set_text(
             f"Showing placements:\n"
             f"{self.visible_placements}/{len(self.result.placements)}"

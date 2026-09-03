@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle as RectanglePatch
 from matplotlib.widgets import Button, RadioButtons, Slider
 
-from bin_packing.algorithms.base import PackingAlgorithm
-from bin_packing.generation import generate_rectangles
-from bin_packing.models import Bin, PackingResult, Rectangle
+from cont_bin_packing.algorithms.base import PackingAlgorithm
+from cont_bin_packing.generation import generate_rectangles
+from cont_bin_packing.models import Bin, PackingResult, Rectangle
 
 
 class PackingVisualiser:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from bin_packing.models import Bin, PackingResult, Rectangle
+from cont_bin_packing.models import Bin, PackingResult, Rectangle
 
 
 class PackingAlgorithm(ABC):

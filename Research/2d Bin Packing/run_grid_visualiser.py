@@ -2,10 +2,10 @@
 
 from random import Random
 
-from grid_bin_packing.algorithms import FirstFeasibleAlgorithm
-from grid_bin_packing.generation import generate_modules
-from grid_bin_packing.models import MODULE_SIZES, GridBin
-from grid_bin_packing.visualiser import GridPackingVisualiser
+from disc_bin_packing.algorithms import FirstFeasibleAlgorithm
+from disc_bin_packing.generation import generate_modules
+from disc_bin_packing.models import MODULE_SIZES, GridBin
+from disc_bin_packing.visualiser import GridPackingVisualiser
 
 
 def main() -> None:

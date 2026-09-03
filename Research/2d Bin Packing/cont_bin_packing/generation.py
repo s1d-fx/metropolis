@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from random import Random
 
-from bin_packing.models import Rectangle
+from cont_bin_packing.models import Rectangle
 
 
 def generate_rectangles(
