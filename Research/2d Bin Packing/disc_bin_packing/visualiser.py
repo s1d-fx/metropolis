@@ -7,6 +7,7 @@ from random import Random
 from time import perf_counter
 
 import matplotlib.pyplot as plt
+from matplotlib.collections import PatchCollection
 from matplotlib.patches import Patch, Rectangle as RectanglePatch
 from matplotlib.widgets import Button, RadioButtons, Slider, TextBox
 
@@ -46,6 +47,7 @@ class GridPackingVisualiser:
         self.visible_placements = 0
         self._random = Random()
         self._updating_weights = False
+        self._syncing_numeric_inputs = False
         colours = plt.get_cmap("tab10")
         self.module_colours = {
             size: colours(index / max(1, len(MODULE_SIZES) - 1))
@@ -179,13 +181,21 @@ class GridPackingVisualiser:
             self._on_numeric_input_submitted(target, field, text)
         )
         slider.on_changed(
-            lambda value, field=text_box: field.set_val(str(int(value)))
+            lambda value, field=text_box: self._sync_numeric_input(field, value)
         )
         self._numeric_inputs.append((slider, text_box))
+
+    def _sync_numeric_input(self, text_box: TextBox, value: float) -> None:
+        """Mirror a slider value without treating it as fresh typed input."""
+        self._syncing_numeric_inputs = True
+        text_box.set_val(str(int(value)))
+        self._syncing_numeric_inputs = False
 
     def _on_numeric_input_submitted(
         self, slider: Slider, text_box: TextBox, text: str
     ) -> None:
+        if self._syncing_numeric_inputs:
+            return
         try:
             value = int(text.strip())
         except ValueError:
@@ -193,7 +203,8 @@ class GridPackingVisualiser:
             return
 
         value = max(int(slider.valmin), min(int(slider.valmax), value))
-        slider.set_val(value)
+        if value != int(slider.val):
+            slider.set_val(value)
 
     def _on_bin_size_changed(self, _: float) -> None:
         self.bin = GridBin(int(self.width_slider.val), int(self.height_slider.val))
@@ -256,13 +267,31 @@ class GridPackingVisualiser:
         axes = self.bin_axes
         axes.clear()
 
-        for placement in self.result.placements[: self.visible_placements]:
-            module = placement.module
-            colour = "0.85" if module.is_filler else self.module_colours[module.size]
+        visible = self.result.placements[: self.visible_placements]
+        all_placements_are_visible = self.visible_placements == len(self.result.placements)
+
+        # In the normal "Show all" state every cell is covered by a trailing
+        # 1×1 filler module.  One background patch represents that completed
+        # filler layer much faster than constructing one patch per cell.
+        if all_placements_are_visible:
             axes.add_patch(
                 RectanglePatch(
+                    (0, 0), self.bin.width, self.bin.height,
+                    facecolor="0.85", edgecolor="none", zorder=0,
+                )
+            )
+
+        module_patches: list[RectanglePatch] = []
+        for placement in visible:
+            module = placement.module
+            if module.is_filler and all_placements_are_visible:
+                continue
+
+            colour = "0.85" if module.is_filler else self.module_colours[module.size]
+            module_patches.append(
+                RectanglePatch(
                     (placement.x, placement.y), module.width, module.height,
-                    facecolor=colour, edgecolor="white", linewidth=1.2,
+                    facecolor=colour, edgecolor="white", linewidth=1.2, zorder=1,
                 )
             )
             if not module.is_filler:
@@ -272,6 +301,9 @@ class GridPackingVisualiser:
                     str(module.identifier), ha="center", va="center", fontsize=8,
                 )
 
+        if module_patches:
+            axes.add_collection(PatchCollection(module_patches, match_original=True))
+
         tick_step = max(1, ceil(max(self.bin.width, self.bin.height) / 20))
         x_cells = list(range(self.bin.width + 1))
         y_cells = list(range(self.bin.height + 1))
@@ -280,7 +312,7 @@ class GridPackingVisualiser:
         axes.set_xticklabels([str(cell) if cell % tick_step == 0 else "" for cell in x_cells])
         axes.set_yticklabels([str(cell) if cell % tick_step == 0 else "" for cell in y_cells])
         # Major ticks deliberately occur at every boundary: the grid is one cell wide.
-        axes.grid(which="major", color="0.65", linewidth=0.7)
+        axes.grid(which="major", color="0.65", linewidth=0.7, zorder=2)
         axes.set_xlim(0, self.bin.width)
         axes.set_ylim(0, self.bin.height)
         axes.set_aspect("equal", adjustable="box")

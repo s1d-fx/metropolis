@@ -18,10 +18,10 @@ class FirstFeasibleAlgorithm(GridPackingAlgorithm):
     name = "First feasible (row scan)"
 
     def pack(self, bin: GridBin, modules: list[Module]) -> GridPackingResult:
-        grid = OccupancyGrid(bin)
+        grid = OccupancyGrid(bin) ### Creates an empty grid with discrete, integer coordinates
         result = GridPackingResult()
 
-        for module in modules:
+        for module in modules: ### A for loop that iterates through each module in the list
             position = self._first_feasible_position(grid, module)
             if position is None:
                 result.unpacked.append(module)

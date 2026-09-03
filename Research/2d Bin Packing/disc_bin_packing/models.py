@@ -104,4 +104,11 @@ class GridPackingResult:
         return self.occupied_cells - self.filler_cells
 
     def utilisation(self, bin: GridBin) -> float:
-        return self.occupied_cells / bin.cell_count
+        """Return packing efficiency before automatic 1×1 filler completion.
+
+        Filler cells make the physical grid completely occupied, but do not
+        represent useful module placement.  Excluding them makes utilisation
+        a measure of how efficiently the algorithm packed the requested
+        modules.
+        """
+        return self.requested_module_cells / bin.cell_count
