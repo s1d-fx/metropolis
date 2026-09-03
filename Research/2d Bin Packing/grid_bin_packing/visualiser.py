@@ -8,7 +8,7 @@ from time import perf_counter
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle as RectanglePatch
-from matplotlib.widgets import Button, RadioButtons, Slider
+from matplotlib.widgets import Button, RadioButtons, Slider, TextBox
 
 from grid_bin_packing.algorithms.base import GridPackingAlgorithm
 from grid_bin_packing.generation import generate_modules
@@ -48,28 +48,28 @@ class GridPackingVisualiser:
         self._updating_weights = False
 
         self.figure, (self.bin_axes, self.unpacked_axes) = plt.subplots(
-            1, 2, figsize=(14, 10), gridspec_kw={"width_ratios": [3.5, 1]}
+            1, 2, figsize=(16, 8), gridspec_kw={"width_ratios": [3.5, 1]}
         )
         self.figure.subplots_adjust(bottom=0.50, wspace=0.30)
         self.figure.suptitle("Discrete Grid Module Packing", fontsize=16)
         self.stats_text = self.figure.text(
-            0.08,
-            0.465,
+            0.68,
+            0.58,
             "",
             family="monospace",
             fontsize=9,
             va="top",
             linespacing=1.35,
             bbox={
-                "boxstyle": "round,pad=0.5",
+                "boxstyle": "round,pad=0.6",
                 "facecolor": "white",
                 "edgecolor": "0.75",
                 "alpha": 0.95,
             },
         )
         self.step_text = self.figure.text(
-            0.69,
-            0.465,
+            0.88,
+            0.31,
             "",
             fontsize=9,
             va="top",
@@ -89,7 +89,8 @@ class GridPackingVisualiser:
         return self.algorithms[self.algorithm_name]
 
     def _build_controls(self) -> None:
-        slider_left, slider_width = 0.16, 0.52
+        slider_left, slider_width = 0.16, 0.40
+        self._numeric_inputs: list[tuple[Slider, TextBox]] = []
         self.width_slider = Slider(
             self.figure.add_axes((slider_left, 0.405, slider_width, 0.025)),
             "Grid width", 1, 40, self.bin.width, valstep=1,
@@ -105,17 +106,24 @@ class GridPackingVisualiser:
         self.width_slider.on_changed(self._on_bin_size_changed)
         self.height_slider.on_changed(self._on_bin_size_changed)
         self.count_slider.on_changed(self._on_generation_changed)
+        for slider, y in (
+            (self.width_slider, 0.405),
+            (self.height_slider, 0.365),
+            (self.count_slider, 0.325),
+        ):
+            self._add_numeric_input(slider, slider_left + slider_width + 0.01, y, 0.055)
 
         self.weight_sliders: dict[ModuleSize, Slider] = {}
         for index, size in enumerate(MODULE_SIZES):
             column = index // 4
             row = index % 4
             left = 0.16 if column == 0 else 0.58
-            axes = self.figure.add_axes((left, 0.275 - row * 0.045, 0.25, 0.022))
+            axes = self.figure.add_axes((left, 0.275 - row * 0.045, 0.16, 0.022))
             width, height = size
             slider = Slider(axes, f"{width}×{height} weight", 0, 10, 1, valstep=1)
             slider.on_changed(self._on_generation_changed)
             self.weight_sliders[size] = slider
+            self._add_numeric_input(slider, left + 0.17, 0.275 - row * 0.045, 0.055)
 
         regenerate_axes = self.figure.add_axes((0.16, 0.035, 0.20, 0.045))
         self.regenerate_button = Button(regenerate_axes, "Regenerate modules")
@@ -136,6 +144,37 @@ class GridPackingVisualiser:
             algorithm_axes, list(self.algorithms), active=0, activecolor="tab:blue"
         )
         self.algorithm_selector.on_clicked(self._on_algorithm_changed)
+
+    def _add_numeric_input(
+        self, slider: Slider, left: float, bottom: float, width: float
+    ) -> None:
+        slider.valtext.set_visible(False)
+        text_box = TextBox(
+            self.figure.add_axes((left, bottom, width, 0.025)),
+            "",
+            initial=str(int(slider.val)),
+            textalignment="center",
+        )
+        text_box.on_submit(
+            lambda text, target=slider, field=text_box:
+            self._on_numeric_input_submitted(target, field, text)
+        )
+        slider.on_changed(
+            lambda value, field=text_box: field.set_val(str(int(value)))
+        )
+        self._numeric_inputs.append((slider, text_box))
+
+    def _on_numeric_input_submitted(
+        self, slider: Slider, text_box: TextBox, text: str
+    ) -> None:
+        try:
+            value = int(text.strip())
+        except ValueError:
+            text_box.set_val(str(int(slider.val)))
+            return
+
+        value = max(int(slider.valmin), min(int(slider.valmax), value))
+        slider.set_val(value)
 
     def _on_bin_size_changed(self, _: float) -> None:
         self.bin = GridBin(int(self.width_slider.val), int(self.height_slider.val))
@@ -242,10 +281,10 @@ class GridPackingVisualiser:
 
         lines = [
             f"#{module.identifier}: {module.width}×{module.height}"
-            for module in self.result.unpacked[:20]
+            for module in self.result.unpacked[:8]
         ]
-        if len(self.result.unpacked) > 20:
-            lines.append(f"… and {len(self.result.unpacked) - 20} more")
+        if len(self.result.unpacked) > 8:
+            lines.append(f"… and {len(self.result.unpacked) - 8} more")
         axes.text(0, 1, "\n".join(lines), va="top", family="monospace")
 
     def _draw_statistics(self) -> None:

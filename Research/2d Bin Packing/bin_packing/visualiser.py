@@ -56,7 +56,7 @@ class PackingVisualiser:
 
     def _build_controls(self) -> None:
         """Create sliders once; callbacks redraw instead of rebuilding widgets."""
-        slider_left, slider_width = 0.16, 0.56
+        slider_left, slider_width = 0.16, 0.35
         slider_positions = [0.35, 0.31, 0.27, 0.23, 0.19, 0.15, 0.11]
         slider_axes = [
             self.figure.add_axes((slider_left, y, slider_width, 0.025))
