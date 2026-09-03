@@ -8,14 +8,26 @@ from disc_bin_packing.models import GridBin, GridPackingResult, GridPlacement, M
 
 
 class FirstFeasibleAlgorithm(GridPackingAlgorithm):
-    """Scan rows bottom-to-top and cells left-to-right for each module.
+    """Place modules using a configurable two-dimensional scan order."""
 
-    This is a proof-of-concept strategy, rather than an attempt to optimise
-    utilisation.  It makes the grid rule especially clear: a module is placed
-    only when every cell in its integer footprint is free.
-    """
+    name = "B->T, L->R"
 
-    name = "First feasible (row scan)"
+    def __init__(
+        self,
+        *,
+        name: str = name,
+        primary_axis: str = "y",
+        x_direction: int = 1,
+        y_direction: int = 1,
+    ) -> None:
+        if primary_axis not in {"x", "y"}:
+            raise ValueError("primary_axis must be either 'x' or 'y'.")
+        if x_direction not in {-1, 1} or y_direction not in {-1, 1}:
+            raise ValueError("Scan directions must be either -1 or 1.")
+        self.name = name
+        self.primary_axis = primary_axis
+        self.x_direction = x_direction
+        self.y_direction = y_direction
 
     def pack(self, bin: GridBin, modules: list[Module]) -> GridPackingResult:
         grid = OccupancyGrid(bin) ### Creates an empty grid with discrete, integer coordinates
@@ -60,8 +72,22 @@ class FirstFeasibleAlgorithm(GridPackingAlgorithm):
     def _first_feasible_position(
         self, grid: OccupancyGrid, module: Module
     ) -> tuple[int, int] | None:
-        for y in range(grid.bin.height):
-            for x in range(grid.bin.width):
-                if grid.can_place(module, x, y):
-                    return x, y
+        x_values = (
+            range(0, grid.bin.width)
+            if self.x_direction == 1
+            else range(grid.bin.width - 1, -1, -1)
+        )
+        y_values = (
+            range(0, grid.bin.height)
+            if self.y_direction == 1
+            else range(grid.bin.height - 1, -1, -1)
+        )
+        coordinates = (
+            ((x, y) for x in x_values for y in y_values)
+            if self.primary_axis == "x"
+            else ((x, y) for y in y_values for x in x_values)
+        )
+        for x, y in coordinates:
+            if grid.can_place(module, x, y):
+                return x, y
         return None

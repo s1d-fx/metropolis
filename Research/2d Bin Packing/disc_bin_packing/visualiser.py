@@ -30,6 +30,8 @@ class GridPackingVisualiser:
     inspectable without mutating or rerunning the packing algorithm.
     """
 
+    filler_colour = "#f2c14e"
+
     def __init__(
         self,
         algorithms: dict[str, GridPackingAlgorithm],
@@ -63,7 +65,7 @@ class GridPackingVisualiser:
             handles=[
                 Patch(facecolor=self.module_colours[size], label=f"{size[0]}×{size[1]}")
                 for size in MODULE_SIZES
-            ],
+            ] + [Patch(facecolor=self.filler_colour, label="Filler 1×1")],
             title="Module size",
             loc="upper left",
             bbox_to_anchor=(0.68, 0.75),
@@ -87,20 +89,6 @@ class GridPackingVisualiser:
                 "alpha": 0.95,
             },
         )
-        self.step_text = self.figure.text(
-            0.88,
-            0.33,
-            "",
-            fontsize=9,
-            va="top",
-            bbox={
-                "boxstyle": "round,pad=0.5",
-                "facecolor": "white",
-                "edgecolor": "0.75",
-                "alpha": 0.95,
-            },
-        )
-
         self._build_controls()
         self.redraw(reset_step=True)
 
@@ -160,10 +148,12 @@ class GridPackingVisualiser:
         self.next_button.on_clicked(self._on_next_clicked)
         self.show_all_button.on_clicked(self._on_show_all_clicked)
 
-        algorithm_axes = self.figure.add_axes((0.85, 0.14, 0.13, 0.08))
+        algorithm_axes = self.figure.add_axes((0.85, 0.10, 0.13, 0.22))
         self.algorithm_selector = RadioButtons(
             algorithm_axes, list(self.algorithms), active=0, activecolor="tab:blue"
         )
+        for label in self.algorithm_selector.labels:
+            label.set_fontsize(8)
         self.algorithm_selector.on_clicked(self._on_algorithm_changed)
 
     def _add_numeric_input(
@@ -277,7 +267,7 @@ class GridPackingVisualiser:
             axes.add_patch(
                 RectanglePatch(
                     (0, 0), self.bin.width, self.bin.height,
-                    facecolor="0.85", edgecolor="none", zorder=0,
+                    facecolor=self.filler_colour, edgecolor="none", zorder=0,
                 )
             )
 
@@ -287,7 +277,7 @@ class GridPackingVisualiser:
             if module.is_filler and all_placements_are_visible:
                 continue
 
-            colour = "0.85" if module.is_filler else self.module_colours[module.size]
+            colour = self.filler_colour if module.is_filler else self.module_colours[module.size]
             module_patches.append(
                 RectanglePatch(
                     (placement.x, placement.y), module.width, module.height,
@@ -316,7 +306,10 @@ class GridPackingVisualiser:
         axes.set_xlim(0, self.bin.width)
         axes.set_ylim(0, self.bin.height)
         axes.set_aspect("equal", adjustable="box")
-        axes.set_title(f"Grid bin ({self.bin.width} × {self.bin.height} cells)")
+        axes.set_title(
+            f"Grid bin ({self.bin.width} × {self.bin.height} cells) "
+            f"({self.visible_placements}/{len(self.result.placements)})"
+        )
         axes.set_xlabel("x cell")
         axes.set_ylabel("y cell")
 
@@ -354,10 +347,6 @@ class GridPackingVisualiser:
                     f"Runtime:          {self.result.runtime_ms:.3f} ms",
                 )
             )        )
-        self.step_text.set_text(
-            f"Showing placements:\n"
-            f"{self.visible_placements}/{len(self.result.placements)}"
-        )
 
     def show(self) -> None:
         """Hand control over to Matplotlib's GUI event loop."""

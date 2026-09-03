@@ -18,6 +18,7 @@ from disc_bin_packing.models import MODULE_SIZES, GridBin, GridPackingResult
 
 FRAME_COUNT = 120
 FPS = 30
+FILLER_COLOUR = "#f2c14e"
 DEFAULT_OUTPUT = (
     Path(__file__).resolve().parent
     / "disc_bin_packing"
@@ -44,7 +45,7 @@ def _draw_frame(
     patches: list[RectanglePatch] = []
     for placement in result.placements[:visible_placements]:
         module = placement.module
-        colour = "0.78" if module.is_filler else colours(module.identifier % 10)
+        colour = FILLER_COLOUR if module.is_filler else colours(module.identifier % 10)
         patches.append(
             RectanglePatch(
                 (placement.x, placement.y), module.width, module.height,
