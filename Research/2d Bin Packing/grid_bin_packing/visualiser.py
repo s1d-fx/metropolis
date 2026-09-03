@@ -7,7 +7,7 @@ from random import Random
 from time import perf_counter
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle as RectanglePatch
+from matplotlib.patches import Patch, Rectangle as RectanglePatch
 from matplotlib.widgets import Button, RadioButtons, Slider, TextBox
 
 from grid_bin_packing.algorithms.base import GridPackingAlgorithm
@@ -46,15 +46,33 @@ class GridPackingVisualiser:
         self.visible_placements = 0
         self._random = Random()
         self._updating_weights = False
+        colours = plt.get_cmap("tab10")
+        self.module_colours = {
+            size: colours(index / max(1, len(MODULE_SIZES) - 1))
+            for index, size in enumerate(MODULE_SIZES)
+        }
 
         self.figure, (self.bin_axes, self.unpacked_axes) = plt.subplots(
             1, 2, figsize=(16, 8), gridspec_kw={"width_ratios": [3.5, 1]}
         )
         self.figure.subplots_adjust(bottom=0.50, wspace=0.30)
         self.figure.suptitle("Discrete Grid Module Packing", fontsize=16)
+        self.figure.legend(
+            handles=[
+                Patch(facecolor=self.module_colours[size], label=f"{size[0]}×{size[1]}")
+                for size in MODULE_SIZES
+            ],
+            title="Module size",
+            loc="upper left",
+            bbox_to_anchor=(0.68, 0.75),
+            fontsize=8,
+            title_fontsize=9,
+            frameon=True,
+            borderpad=0.6,
+        )
         self.stats_text = self.figure.text(
             0.68,
-            0.58,
+            0.52,
             "",
             family="monospace",
             fontsize=9,
@@ -69,7 +87,7 @@ class GridPackingVisualiser:
         )
         self.step_text = self.figure.text(
             0.88,
-            0.31,
+            0.33,
             "",
             fontsize=9,
             va="top",
@@ -90,6 +108,7 @@ class GridPackingVisualiser:
 
     def _build_controls(self) -> None:
         slider_left, slider_width = 0.16, 0.40
+        slider_positions = [0.405, 0.365, 0.325]
         self._numeric_inputs: list[tuple[Slider, TextBox]] = []
         self.width_slider = Slider(
             self.figure.add_axes((slider_left, 0.405, slider_width, 0.025)),
@@ -139,7 +158,7 @@ class GridPackingVisualiser:
         self.next_button.on_clicked(self._on_next_clicked)
         self.show_all_button.on_clicked(self._on_show_all_clicked)
 
-        algorithm_axes = self.figure.add_axes((0.85, 0.215, 0.13, 0.08))
+        algorithm_axes = self.figure.add_axes((0.85, 0.14, 0.13, 0.08))
         self.algorithm_selector = RadioButtons(
             algorithm_axes, list(self.algorithms), active=0, activecolor="tab:blue"
         )
@@ -237,10 +256,9 @@ class GridPackingVisualiser:
         axes = self.bin_axes
         axes.clear()
 
-        colours = plt.get_cmap("tab20")
         for placement in self.result.placements[: self.visible_placements]:
             module = placement.module
-            colour = "0.85" if module.is_filler else colours((module.identifier - 1) % colours.N)
+            colour = "0.85" if module.is_filler else self.module_colours[module.size]
             axes.add_patch(
                 RectanglePatch(
                     (placement.x, placement.y), module.width, module.height,
