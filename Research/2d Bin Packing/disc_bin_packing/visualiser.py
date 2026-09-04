@@ -60,8 +60,8 @@ class GridPackingVisualiser:
         self.figure, (self.bin_axes, self.unpacked_axes) = plt.subplots(
             1, 2, figsize=(16, 8), gridspec_kw={"width_ratios": [3.5, 1]}
         )
-        self.figure.subplots_adjust(bottom=0.50, wspace=0.30)
-        self.figure.suptitle("Discrete Grid Module Packing", fontsize=16)
+        self.figure.subplots_adjust(left=0.05, bottom=0.50, wspace=0.75)
+        self.figure.suptitle("Discrete Module Packing", fontsize=16)
         self.figure.legend(
             handles=[
                 Patch(facecolor=self.module_colours[size], label=f"{size[0]}×{size[1]}")
@@ -69,15 +69,15 @@ class GridPackingVisualiser:
             ] + [Patch(facecolor=self.filler_colour, label="Filler 1×1")],
             title="Module size",
             loc="upper left",
-            bbox_to_anchor=(0.68, 0.75),
+            bbox_to_anchor=(0.46, 0.8),
             fontsize=8,
             title_fontsize=9,
             frameon=True,
             borderpad=0.6,
         )
         self.stats_text = self.figure.text(
-            0.68,
-            0.52,
+            0.57,
+            0.77,
             "",
             family="monospace",
             fontsize=9,
@@ -98,8 +98,7 @@ class GridPackingVisualiser:
         return self.algorithms[self.algorithm_name]
 
     def _build_controls(self) -> None:
-        slider_left, slider_width = 0.16, 0.40
-        slider_positions = [0.405, 0.365, 0.325]
+        slider_left, slider_width = 0.16, 0.26
         self._numeric_inputs: list[tuple[Slider, TextBox]] = []
         self.width_slider = Slider(
             self.figure.add_axes((slider_left, 0.405, slider_width, 0.025)),
@@ -111,7 +110,7 @@ class GridPackingVisualiser:
         )
         self.count_slider = Slider(
             self.figure.add_axes((slider_left, 0.325, slider_width, 0.025)),
-            "Module count", 1, 120, len(self.modules), valstep=1,
+            "Modules", 1, 120, len(self.modules), valstep=1,
         )
         self.width_slider.on_changed(self._on_bin_size_changed)
         self.height_slider.on_changed(self._on_bin_size_changed)
@@ -127,8 +126,8 @@ class GridPackingVisualiser:
         for index, size in enumerate(MODULE_SIZES):
             column = index // 4
             row = index % 4
-            left = 0.16 if column == 0 else 0.58
-            axes = self.figure.add_axes((left, 0.275 - row * 0.045, 0.16, 0.022))
+            left = 0.16 if column == 0 else 0.46
+            axes = self.figure.add_axes((left, 0.275 - row * 0.045, 0.15, 0.022))
             width, height = size
             slider = Slider(axes, f"{width}×{height} weight", 0, 10, 1, valstep=1)
             slider.on_changed(self._on_generation_changed)
@@ -149,12 +148,13 @@ class GridPackingVisualiser:
         self.next_button.on_clicked(self._on_next_clicked)
         self.show_all_button.on_clicked(self._on_show_all_clicked)
 
-        algorithm_axes = self.figure.add_axes((0.85, 0.10, 0.13, 0.22))
+        algorithm_axes = self.figure.add_axes((0.52, 0.34, 0.20, 0.22))
+        algorithm_axes.set_title("First Feasible", fontsize=9)
         self.algorithm_selector = RadioButtons(
             algorithm_axes, list(self.algorithms), active=0, activecolor="tab:blue"
         )
         for label in self.algorithm_selector.labels:
-            label.set_fontsize(8)
+            label.set_fontsize(7)
         self.algorithm_selector.on_clicked(self._on_algorithm_changed)
 
     def _add_numeric_input(
@@ -183,13 +183,8 @@ class GridPackingVisualiser:
         self._syncing_numeric_inputs = False
 
     def _schedule_repack(self) -> None:
-        """Coalesce rapid slider changes into one deferred repack."""
-        if self._repack_timer is None:
-            self._repack_timer = self.figure.canvas.new_timer(interval=120)
-            self._repack_timer.single_shot = True
-            self._repack_timer.add_callback(self._run_scheduled_repack)
-        self._repack_timer.stop()
-        self._repack_timer.start()
+        """Repack immediately so slider changes are reflected in the grid."""
+        self.redraw(reset_step=True)
 
     def _cancel_scheduled_repack(self) -> None:
         if self._repack_timer is not None:
@@ -226,7 +221,7 @@ class GridPackingVisualiser:
         if not any(slider.val for slider in self.weight_sliders.values()):
             self.weight_sliders[MODULE_SIZES[0]].set_val(1)
         self._updating_weights = False
-        self._schedule_repack()
+        self._regenerate_modules()
 
     def _on_regenerate_clicked(self, _: object) -> None:
         self._cancel_scheduled_repack()
@@ -361,7 +356,7 @@ class GridPackingVisualiser:
         self.stats_text.set_text(
             "\n".join(
                 (
-                    f"Algorithm:       {self.algorithm.name}",
+                    f"Algorithm:       {getattr(self.algorithm, 'short_name', self.algorithm.name)}",
                     f"Modules:         {len(self.modules)}",
                     f"Requested cells: {requested_cells}",
                     f"Module cells:    {self.result.requested_module_cells}",

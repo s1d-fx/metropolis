@@ -10,7 +10,7 @@ from disc_bin_packing.models import GridBin, GridPackingResult, GridPlacement, M
 class FirstFeasibleAlgorithm(GridPackingAlgorithm):
     """Place modules using a configurable two-dimensional scan order."""
 
-    name = "B->T, L->R"
+    name = "First Feasible"
 
     def __init__(
         self,
@@ -28,6 +28,15 @@ class FirstFeasibleAlgorithm(GridPackingAlgorithm):
         self.primary_axis = primary_axis
         self.x_direction = x_direction
         self.y_direction = y_direction
+
+    @property
+    def short_name(self) -> str:
+        """Return the compact scan-order label used in the statistics panel."""
+        horizontal = "L->R" if self.x_direction == 1 else "R->L"
+        vertical = "B->T" if self.y_direction == 1 else "T->B"
+        if self.primary_axis == "x":
+            return f"{horizontal}, {vertical}"
+        return f"{vertical}, {horizontal}"
 
     def pack(self, bin: GridBin, modules: list[Module]) -> GridPackingResult:
         grid = OccupancyGrid(bin) ### Creates an empty grid with discrete, integer coordinates

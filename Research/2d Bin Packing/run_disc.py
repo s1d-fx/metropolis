@@ -16,21 +16,27 @@ def main() -> None:
     )
     visualiser = GridPackingVisualiser(
         algorithms={
-            "B->T, L->R": FirstFeasibleAlgorithm(),
-            "B->T, R->L": FirstFeasibleAlgorithm(
-                name="B->T, R->L", x_direction=-1
+            "Bottom to Top, Left to Right": FirstFeasibleAlgorithm(
+                name="Bottom to Top, Left to Right"
             ),
-            "T->B, L->R": FirstFeasibleAlgorithm(
-                name="T->B, L->R", y_direction=-1
+            "Bottom to Top, Right to Left": FirstFeasibleAlgorithm(
+                name="Bottom to Top, Right to Left", x_direction=-1
             ),
-            "T->B, R->L": FirstFeasibleAlgorithm(
-                name="T->B, R->L", x_direction=-1, y_direction=-1
+            "Top to Bottom, Left to Right": FirstFeasibleAlgorithm(
+                name="Top to Bottom, Left to Right", y_direction=-1
             ),
-            "L->R, B->T": FirstFeasibleAlgorithm(
-                name="L->R, B->T", primary_axis="x"
+            "Top to Bottom, Right to Left": FirstFeasibleAlgorithm(
+                name="Top to Bottom, Right to Left",
+                x_direction=-1,
+                y_direction=-1,
             ),
-            "R->L, B->T": FirstFeasibleAlgorithm(
-                name="R->L, B->T", primary_axis="x", x_direction=-1
+            "Left to Right, Bottom to Top": FirstFeasibleAlgorithm(
+                name="Left to Right, Bottom to Top", primary_axis="x"
+            ),
+            "Right to Left, Bottom to Top": FirstFeasibleAlgorithm(
+                name="Right to Left, Bottom to Top",
+                primary_axis="x",
+                x_direction=-1,
             ),
         },
         bin=GridBin(width=10, height=8),
