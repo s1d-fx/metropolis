@@ -92,10 +92,7 @@ The following renders show example outputs from the First Feasible visualiser:
 
 The placement process can be viewed as an animation:
 
-<video controls>
-	<source src="https://raw.githubusercontent.com/s1d-fx/metropolis/main/Research/2d%20Bin%20Packing/disc_bin_packing/algorithms/First%20Feasible%20(Anim).mp4" type="video/mp4">
-	Your browser does not support embedded videos. [Download the First Feasible animation](https://raw.githubusercontent.com/s1d-fx/metropolis/main/Research/2d%20Bin%20Packing/disc_bin_packing/algorithms/First%20Feasible%20(Anim).mp4).
-</video>
+![First Feasible animation](disc_bin_packing/algorithms/First%20Feasible%20(Anim).gif)
 
 The scaling experiments produced the following graphs for a fixed 10 × 8 grid:
 
