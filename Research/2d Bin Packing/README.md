@@ -3,13 +3,14 @@
 
 ## Research direction
 
-The project began with an experiment using a classic continuous bin-packing
-strategy: bottom-left placement. That implementation is contained in the
-`cont_bin_packing` folder. It provided a useful starting point, but the target
-use case required a more controlled relationship between the generated modules
-and the geometry of a building face. A continuous solution could place shapes
-at arbitrary coordinates, whereas the intended facade needed a discrete,
-grid-based structure.
+I started my research into bin packing by investigating existing algorithms in
+the field, including the classic bottom-left algorithm. These approaches are
+continuous: they generally allow shapes to be placed at arbitrary coordinates
+within a container. While this is useful for general bin-packing problems, it
+did not fully suit the intended use case in Blender Geometry Nodes, where the
+building face needed a more controlled, discrete structure. The continuous
+bottom-left implementation is retained in the `cont_bin_packing` folder as
+part of this investigation.
 
 This led to the development of a discrete bin-packing system. The system was
 designed around the following rules:
@@ -172,5 +173,7 @@ interactive and exploratory facade generation. A more powerful offline pass
 could be added later for final production layouts. In the meantime, ordering
 larger modules first, reserving regions for large modules, or comparing the
 six scan directions can reduce fragmentation without giving up the algorithm's
-speed and procedural simplicity.
+speed and procedural simplicity. 
+
+These results were obtained using a fixed 10 × 8 grid for the scaling experiments, so the observed thresholds should not be treated as universal properties of the First Feasible algorithm. Different grid dimensions, module distributions and ordering strategies may produce different results. is this good to add at the end
 
