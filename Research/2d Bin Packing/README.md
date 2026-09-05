@@ -92,7 +92,10 @@ The following renders show example outputs from the First Feasible visualiser:
 
 The placement process can be viewed as an animation:
 
-[First Feasible animation](disc_bin_packing/algorithms/First%20Feasible%20(Anim).mp4)
+<video controls>
+	<source src="disc_bin_packing/algorithms/First%20Feasible%20(Anim).mp4" type="video/mp4">
+	Your browser does not support embedded videos. [Download the First Feasible animation](disc_bin_packing/algorithms/First%20Feasible%20(Anim).mp4).
+</video>
 
 The scaling experiments produced the following graphs for a fixed 10 × 8 grid:
 
