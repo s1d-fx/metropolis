@@ -160,8 +160,8 @@ To check how close the heuristics are to a best possible result, I also added
 `optimal_baseline.py`. It uses exhaustive search on small 4 × 4 instances,
 trying every legal placement and every possible decision to leave a module
 unpacked. The baseline maximises the number of requested module cells placed,
-then uses the number of packed modules as a tie-breaker. This is deliberately
-limited to small inputs because exhaustive search becomes impractical as the
+then uses the number of packed modules as a tie-breaker. I deliberately
+limited this to small inputs because a full search becomes impractical as the
 grid and module count increase.
 
 ## 6. Results
