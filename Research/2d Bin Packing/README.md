@@ -31,7 +31,7 @@ matplotlib visualiser for inspecting the results interactively.
 
 ### 2.1 The 2D Bin Packing Problem
 
-In a survey by Lodi, Martello & Monaci, the problem of two-dimensional
+In a survey by Lodi, Martello & Monaci (2002), the problem of two-dimensional
 bin packing (2D-BPP) is described as fitting *n* rectangular items into the minimum
 number of identical rectangular bins of width *w* and height *h* [1]. It can be applied 
 in areas such as cutting materials, loading and transportation, where objects cannot
@@ -74,37 +74,31 @@ following rules:
 
 ### 3.1 Next Fit Decreasing Height (NFDH)
 
-The Next Fit Decreasing Height algorithm was one of the heuristics I
-looked at. In this approach, rectangles are sorted by decreasing height and
-placed into the current bin until the next rectangle no longer fits, at which
-point a new bin is started. My continuous Next Fit implementation is kept in
-`cont_bin_packing` folder as part of this work.
+Christensen et al. (2017) describe NFDH as ordering the items from tallest to shortest, before placing them into "shelves". Each shelf consists of items placed next to each other with their bases aligned horizontally, with the first shelf starting at the bottom of the bin and subsequent shelves placed with its base resting flat on top of the tallest item in the shelf below [2].
 
 ### 3.2 First Fit (FF)
 
-Skyline packing was also considered as an alternative approach for the
-investigation.
+First Fit is a simple algorithm where items are considered one at a time. Johnson et al. (1974) describe it as placing each item into the first bin in which it fits. If it cannot be placed in any of the existing bins, a new bin is opened. [3] Once an item has been placed, the algorithm does not at any point go back and change its position. Because of this, the algorithm is less efficient than "enumerate" approaches, but it is certainly faster.
 
-### 3.3 MaxRects
+### 3.3 Maximal Rectangles (MaxRects)
 
-MaxRects was considered alongside First Feasible and shelf-based packing.
+In Jukka Jylänki's paper A Thousand Ways To Pack The Bin, he describes MaxRects as an algorithm that divides the bin into the largest rectangular regions available [4]. When an item is placed, these regions are updated to represent the space that remains available. The algorithm then chooses a suitable free rectangle for the next item using a heuristic such as Best Area Fit or Best Short Side Fit. This allows MaxRects to make use of irregular spaces left by previously placed items. Although it is an efficient algorithm, its complexity costs significant runtime.
 
 ## 4. Methodology
 
-I considered several packing approaches, including First Feasible, MaxRects,
-and shelf-based packing. I selected First Feasible because its simple control
-flow makes it a practical candidate for implementation in Blender Geometry
-Nodes.
+After considering these approaches I felt that First Fit was the most practical 
+candidate for implementation in Blender Geometry Nodes. However, there were 
+some parts of the algorithm, like how it involved multiple bins, that differed from 
+my end goal. Thus, I adapted it into a new algorithm called First Feasible.
 
-First Feasible depends on the order of the modules. For example, presenting
-modules in the order
-`3×3 -> 2×2 -> 1×3` can produce a completely different packing from presenting
-the same modules as `1×3 -> 3×3 -> 2×2`.
+First Feasible depends on the order of the modules. For example, inputting
+modules in the order *3×3 -> 2×2 -> 1×3* can result in a completely different 
+packing from inputting the same modules as *1×3 -> 3×3 -> 2×2*.
 
-For each module, the algorithm scans the grid in its configured direction and
+For each module, the algorithm scans the grid in the configured direction and
 immediately selects the first position where the module fits. It does not
 compare all feasible positions or reconsider earlier placements to improve the
-final result. The visualiser provides six scan-order variants:
+final result. My visualiser provides six scan-order variants:
 
 - Bottom to Top, Left to Right
 - Bottom to Top, Right to Left
@@ -113,37 +107,38 @@ final result. The visualiser provides six scan-order variants:
 - Left to Right, Bottom to Top
 - Right to Left, Bottom to Top
 
-The algorithm also has an application-specific completion step. The
+The algorithm also includes a completion step specific for my application. The
 `_fill_empty_cells()` method adds `1×1` filler modules to any cells that remain
 empty after the requested modules have been processed. This completion step is
-not inherently part of First Feasible. I added it because the building-face
-use case requires a completely filled grid. Filler modules are marked with
-`is_filler=True`, so they can be distinguished from the originally generated
-modules when calculating utilisation and analysing the results.
+not inherently part of the First Feasible algorithm. I simply added it because the 
+building facade use case requires a completely filled grid. Filler modules are marked 
+with the attribute `is_filler=True`, so they can be distinguished from the originally 
+generated modules when calculating utilisation (the proportion of cells successfully filled 
+by the packing algorithm) and analysing the results.
 
 ### 4.1 Visualisation and experimentation
 
-The Matplotlib visualiser connects First Feasible to an interactive grid
+The Matplotlib visualiser connects `first_feasible.py` to an interactive grid
 representation. It allows the grid dimensions, module count, module-size
-weights, and scan-order variant to be changed. It reports runtime, requested
-module cells, filler cells, occupied cells, and utilisation. The controls
-update the packing so the effect of each parameter can be inspected without
-manually rebuilding the experiment.
+weights, and scan-order variant to be changed. It reports the runtime, requested
+module cells, number of filler cells, occupied cells, and utilisation. The controls
+update the packing in real time so that the effect of each parameter can be inspected 
+without re-running the experiment.
 
 ## 5. Experiments
 
-The `stats_gen.py` script provides a separate quantitative experiment. It runs
-multiple trials for a fixed grid and module count, then reports runtime,
+The `stats_gen.py` script is a separate quantitative experiment. It can run
+up to 30 trials for a set grid size and module count, then reports runtime,
 utilisation, and the proportion of requested modules successfully packed for
-each trial. It also generates scaling graphs for these measures as the module
-count changes.
+each trial. It also has options generate scaling graphs for each of these measures 
+as the module count changes.
 
 ## 6. Results
 
 ### 6.1 Visual Evidence
 
-The following renders show some example outputs from the First Feasible
-visualiser:
+The following renders show some snapshots of the First Feasible visualiser output
+during different stages as I worked on cleaning up its interface.
 
 ![First Feasible packing](disc_bin_packing/algorithms/First%20Feasible.png)
 
@@ -157,43 +152,40 @@ The placement process is shown in the animation below:
 
 ![First Feasible animation](disc_bin_packing/algorithms/First%20Feasible%20(Anim).gif)
 
-The scaling experiments produced the following graphs using a fixed 10 × 8
-grid:
+The scaling experiments produced the following graphs using a fixed 10 × 8 grid/bin:
 
-![Runtime scaling](disc_bin_packing/Scaling_Experiments/Runtime%20Scaling.png)
+![Runtime scaling](Runtime%20Scaling.png)
 
-![Utilisation scaling](disc_bin_packing/Scaling_Experiments/Utilisation%20Scaling.png)
+![Utilisation scaling](Utilisation%20Scaling.png)
 
-![Packed-module scaling](disc_bin_packing/Scaling_Experiments/Packed%20Scaling.png)
+![Packed-module scaling](Packed%20Scaling.png)
 
-![Convergence point](disc_bin_packing/Scaling_Experiments/Convergence_Point.png)
+![Convergence point](Convergence_Point.png)
 
 ### 6.2 Experimental Observations
 
-For the scaling experiments, I kept the grid at 10 × 8 cells and varied the
+For the scaling experiments, I kept the grid at 10 × 8 cells and varied the 
 target module count.
 
 **Utilisation**
 
 Utilisation initially increases as the module count increases. This is
-expected: more requested modules generally occupy more cells, so fewer filler
-modules are needed to complete the grid. At a module count of approximately
-40, the grid was almost uniformly at 100% utilisation.
+expected expected as the requested modules are all successfully packed until the 
+grid starts to fill up. At a module count of around 40, the grid was almost uniformly 
+at 100% utilisation.
 
 The trend eventually levels off and can dip slightly. Once the grid becomes
-dense, the order-dependent placements can create fragmented gaps that cannot
-be used. These gaps can prevent later modules from fitting even when some cell
-area is still available. Filler modules still complete the physical grid, but
-they are excluded from the useful-module utilisation measure.
+dense, the order-dependent placements can cause fragmentation, creating gaps 
+that cannot be used. These gaps can prevent future modules from fitting even though
+some cells are still available. Filler modules still complete the physical grid, but
+they are excluded from the useful module utilisation calculation.
 
 **Runtime**
 
-Runtime follows a fairly linear upward trend as the module count increases.
-Each additional requested module creates more placement work, and the
-algorithm checks candidate positions until it finds a feasible one or runs out
-of grid space. As the module count grows, the runtime trend becomes less
-uncertain. This suggests that latency becomes more predictable when the
-algorithm has a larger and more consistent amount of work to perform.
+Runtime follows quite a linear upward trend as the module count increases because 
+each additional requested module creates more work. As the module count grows, 
+the uncertainty in the gradient decreases. This suggests that latency becomes more 
+predictable when a larger amount of work has to be done.
 
 **Successfully Packed Modules**
 
@@ -210,9 +202,9 @@ later module from fitting even when enough total area appears to remain.
 
 ## 7. Discussion
 
-These results suggest that First Feasible is a good fit for Blender Geometry
-Nodes when speed, simplicity, and predictable behaviour matter more than
-optimal packing.
+These results show that First Feasible is a good fit for Blender Geometry
+Nodes where speed, simplicity, and predictable behaviour matters more than
+getting an optimal packing.
 
 Its main strengths are:
 
@@ -233,28 +225,30 @@ become significant.
 
 ## 8. Application to Metropolis
 
-For this use case, First Feasible is a strong candidate for interactive and
-exploratory facade generation. A more powerful offline pass could be added
-later for final production layouts. In the meantime, ordering larger modules
-first, reserving regions for large modules, or comparing the six scan
-directions can reduce fragmentation without giving up the algorithm's speed
-and procedural simplicity.
+The final aim of this research is to apply my First Feasible algorithm to my procedural building generator, _Metropolis_. The algorithm will determine where each architectural module can be placed on a predefined discrete facade grid, while ensuring that modules do not overlap or extend beyond the building. 
+
+In Geometry Nodes, I plan to use the ***grid*** node followed by ***mesh to points*** and ***instance on points*** to generate the cells. I will then implement the algorithm using Blender's ***repeat zone*** as well as boolean nodes like ***and***, ***or*** and ***not*** to control which cells are being selected. I will use an "occupied" ***attribute*** to control which cells are chosen to place modules on. 
+
+The algorithm's output will determine the coordinates and module types, which can then be used to instance the corresponding geometry. This separates the computational problem of deciding where modules can be placed from the visual design of the modules themselves, allowing different facade styles to be generated using the same underlying algorithm.
 
 ## 9. Conclusion
 
-First Feasible works well for interactive and exploratory facade generation
+First Feasible works quite well for quick and interactive facade generation
 when speed, simplicity, and predictable behaviour matter more than optimal
 packing. It produces valid, completely filled grid representations, but its
-dependence on order and its tendency to create fragmentation make it less
+dependence on order and its tendency to create fragmentation makes it less
 suitable when every requested module must be placed or material efficiency is
 important.
 
-These results came from a fixed 10 × 8 grid for the scaling experiments, so
+**Note**: these results came from a fixed 10 × 8 grid for the scaling experiments, so
 the observed thresholds should not be treated as universal properties of the
 First Feasible algorithm. Different grid dimensions, module distributions, and
 ordering strategies may produce different results.
 
 ## References
 
-No external references are currently listed.
+1. Lodi, A., Martello, S. and Monaci, M. (2002). ‘Two-dimensional packing problems: A survey’. _European Journal of Operational Research_, 141(2), pp. 241–252. DOI: 10.1016/S0377-2217(02)00123-6.
+2. Christensen, H. I., Khan, A., Pokutta, S. and Tetali, P. (2017). ‘Approximation and online algorithms for multidimensional bin packing: A survey’. _Computer Science Review_, 24, pp. 63–79. DOI: 10.1016/j.cosrev.2016.12.001.
+3. Johnson, D. S., Demers, A., Ullman, J. D., Garey, M. R. and Graham, R. L. (1974). ‘Worst-Case Performance Bounds for Simple One-Dimensional Packing Algorithms’. _SIAM Journal on Computing_, 3(4), pp. 299–325. DOI: 10.1137/0203025.
+4. Jylänki, J. (2010). ‘A Thousand Ways to Pack the Bin – A Practical Approach to Two-Dimensional Rectangle Bin Packing’. Technical report.
 
