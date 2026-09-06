@@ -7,8 +7,8 @@ packing in the context of procedural building generation. Existing packing
 algorithms were researched and a continuous packing prototype was implemented
 in Python to see how it behaved under different conditions. The problem was
 then reformulated as a discrete, grid-based packing problem using a fixed set
-of building-module dimensions. The resulting grid-based prototype was used to
-assess its suitability for procedural generation and to inform the development
+of building-module dimensions. The resulting grid-based prototypes were used to
+assess their suitability for procedural generation and to inform the development
 of a grid-based packing system in Blender Geometry Nodes.
 
 ## 1. Introduction
@@ -105,7 +105,7 @@ reconsider earlier placements to improve the final result. NFDH instead sorts
 modules by height and places them into horizontal shelves. MaxRects maintains
 the available rectangular regions and selects a position using the Best Short
 Side Fit heuristic. These differences make it possible to compare a simple
-first-fit approach with methods that use more information about the remaining
+first-fit style approach with methods that use more information about the remaining
 space.
 
 All three algorithms also include a completion step specific for my application. The
@@ -136,9 +136,12 @@ as the module count changes.
 
 For the scaling plots, I used a 10 × 8 grid, 10 trials per module count, and
 equal weights for each permitted module size. Module counts start at 1 and then
-increase in steps of 5 up to a final point at 120. Each experiment run
-generates a new random module distribution, so repeating a run can produce
-different utilisation and packing results.
+increase in steps of 5 up to a final point at 120. The default seed is 2026,
+so repeating the same experiment produces the same generated module sequences.
+The seed can be changed from the command line with
+`python stats_gen.py --seed 1234`.
+Packing metrics are therefore repeatable; measured runtime can still vary
+slightly with system load.
 
 Runtime measures only the call to the packing algorithm; the runtime plot
 shows the mean with error bars of ±1 standard deviation.
@@ -148,10 +151,17 @@ NFDH, and MaxRects (Best Short Side Fit) within each trial. The generator uses
 the same generated module list, module-size weights, grid dimensions, and
 requested module counts within each comparison run. This controls the input
 distribution so that differences in the results are attributable to the
-placement heuristics rather than different random inputs. A new random
-distribution is generated when the comparison is run again. The algorithms are
+placement heuristics rather than different random inputs. The algorithms are
 still timed independently, and the chart reports their mean runtime, useful
 utilisation before filler modules, and proportion of requested modules packed.
+
+To check how close the heuristics are to a best possible result, I also added
+`optimal_baseline.py`. It uses exhaustive search on small 4 × 4 instances,
+trying every legal placement and every possible decision to leave a module
+unpacked. The baseline maximises the number of requested module cells placed,
+then uses the number of packed modules as a tie-breaker. This is deliberately
+limited to small inputs because exhaustive search becomes impractical as the
+grid and module count increase.
 
 ## 6. Results
 
@@ -217,7 +227,7 @@ Utilisation initially increases as the module count increases. This is expected
 as the requested modules are all successfully packed until the grid starts to
 fill up. At a module count of around 40, the grid was close to full for all
 three algorithms, although the exact point at which each curve levels off
-depends on the generated module sequence.
+depends on the seed of module generation.
 
 The trend eventually levels off and can dip slightly. For First Feasible, the
 order-dependent placements can create fragmented gaps that prevent later
@@ -231,7 +241,7 @@ from the useful module utilisation calculation.
 
 **Runtime**
 
-Runtime follows an upward trend as the module count increases because each
+Runtime also increases as the module count increases because each
 additional requested module creates more work. First Feasible performs a direct
 grid scan, so its work is relatively simple but can increase when many
 positions must be checked. NFDH adds the cost of sorting the modules before
@@ -242,18 +252,19 @@ decreases, making the relative runtime behaviour easier to compare.
 
 **Successfully Packed Modules**
 
-The proportion of successfully packed modules shows a different pattern. At
-low module counts it stays at 100% because the grid has enough capacity for
-all requested modules. Once a threshold module count is reached, the grid
+The proportion of successfully packed modules shows a very different pattern.
+At low module counts it stays at 100% because the grid always has enough cells
+for all requested modules. Once a "threshold" module count is reached, the grid
 cannot accommodate every request. The ratio of successfully packed modules to
 the total requested modules then decreases as more requests are made.
 
-This shows the main limitation of First Feasible. Once the grid passes its
+This exposes the main limitation of First Feasible. Once the grid passes its
 threshold, additional modules are increasingly likely to be rejected. Because
-the algorithm does not revisit earlier decisions, fragmentation can prevent a
-later module from fitting even when enough total area appears to remain. NFDH
-can avoid some of these fragmented gaps when the module heights suit its shelf
-structure, but it may reject modules that do not fit the current shelf. MaxRects
+the algorithm does not go back to question earlier decisions, fragmentation can
+prevent a later module from fitting even when enough total area appears to remain.
+NFDH can avoid some of these fragmented gaps when the module heights suit its
+shelf structure, but it may reject modules that do not fit the current shelf.
+MaxRects
 usually has more information available when choosing a placement, so it can
 delay this point on some inputs, but that improvement comes with extra runtime
 and is not guaranteed for every random sequence.
@@ -273,6 +284,29 @@ added; it does not mean the filler cells themselves were useful placements.
 Runtime differences should be considered alongside those packing metrics, since
 the measurements include only each algorithm's `pack` call and exclude chart
 rendering and input generation.
+
+**Small-instance optimality baseline**
+
+The exhaustive baseline provides a reference point rather than another
+scalable algorithm. On the 4 × 4 benchmark cases, the gap is the number of
+requested module cells between the optimal result and each heuristic result.
+A gap of zero means that the heuristic matched the best packing for that input;
+it does not prove that the heuristic is always optimal on larger or different
+inputs. The baseline is useful because it tests the main claim directly: how
+much packing quality is being traded for the speed and simplicity of each
+heuristic.
+
+| Seed | Optimal cells | First Feasible | NFDH | MaxRects (BSSF) |
+| ---: | ---: | ---: | ---: | ---: |
+| 11 | 16 | 16 (gap 0) | 12 (gap 4) | 16 (gap 0) |
+| 22 | 14 | 14 (gap 0) | 12 (gap 2) | 14 (gap 0) |
+| 33 | 15 | 15 (gap 0) | 15 (gap 0) | 15 (gap 0) |
+
+These three cases are too small to support a general ranking, but they show
+why the baseline is useful. First Feasible and MaxRects matched the optimum
+on these inputs, while NFDH left more unused requested-module area on two of
+the cases. More cases and larger small instances would be needed before
+drawing a stronger conclusion.
 
 ## 7. Discussion
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from random import Random
 from pathlib import Path
 from statistics import fmean, stdev
@@ -26,6 +27,7 @@ DEFAULT_WIDTH = 10
 DEFAULT_HEIGHT = 8
 DEFAULT_MODULE_COUNT = 40
 DEFAULT_TRIALS = 10
+DEFAULT_SEED = 2026
 COMPARISON_FIGURE = (
     Path(__file__).resolve().parent
     / "disc_bin_packing"
@@ -37,7 +39,8 @@ COMPARISON_FIGURE = (
 class RuntimeExperiment:
     """Run and display repeated packing measurements on demand."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, seed: int = DEFAULT_SEED) -> None:
+        self.seed = seed
         self.algorithms: dict[str, GridPackingAlgorithm] = {
             "First Feasible": FirstFeasibleAlgorithm(),
             "NFDH": NFDHAlgorithm(),
@@ -194,7 +197,7 @@ class RuntimeExperiment:
     ) -> None:
         trial_count = int(self.trial_slider.val)
         module_counts = self._module_counts_for_scaling()
-        random_source = Random()
+        random_source = Random(self.seed)
         values: list[float] = []
         runtime_standard_deviations: list[float] = []
         for module_count in module_counts:
@@ -252,7 +255,7 @@ class RuntimeExperiment:
             name: {"runtime": [], "utilisation": [], "packed": []}
             for name in self.algorithms
         }
-        random_source = Random()
+        random_source = Random(self.seed)
 
         for module_count in module_counts:
             measurements = {
@@ -325,7 +328,7 @@ class RuntimeExperiment:
         bin = GridBin(width, height)
         weights = {size: 1 for size in MODULE_SIZES}
         measurements: list[tuple[int, float, float, int]] = []
-        random_source = Random()
+        random_source = Random(self.seed)
 
         for trial in range(1, trial_count + 1):
             modules = generate_modules(
@@ -415,7 +418,17 @@ class RuntimeExperiment:
 
 
 def main() -> None:
-    RuntimeExperiment().show()
+    parser = argparse.ArgumentParser(
+        description="Run interactive, reproducible discrete packing experiments."
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=DEFAULT_SEED,
+        help=f"Seed for generated module sequences (default: {DEFAULT_SEED}).",
+    )
+    args = parser.parse_args()
+    RuntimeExperiment(seed=args.seed).show()
 
 
 if __name__ == "__main__":
