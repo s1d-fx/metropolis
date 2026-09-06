@@ -56,28 +56,6 @@ class FirstFeasibleAlgorithm(GridPackingAlgorithm):
         result.cells = grid.snapshot()
         return result
 
-    def _fill_empty_cells(
-        self,
-        grid: OccupancyGrid,
-        result: GridPackingResult,
-        modules: list[Module],
-    ) -> None:
-        """Finish the bin with explicit 1×1 filler modules.
-
-        Input 1×1 modules are placed during the normal first-feasible pass.
-        These fillers are separate, trailing placements so experiments can
-        distinguish requested modules from cells completed at the end.
-        """
-        next_identifier = max((module.identifier for module in modules), default=0) + 1
-        for y, row in enumerate(grid.snapshot()):
-            for x, cell in enumerate(row):
-                if cell is not None:
-                    continue
-                filler = Module(next_identifier, 1, 1, is_filler=True)
-                grid.place(filler, x, y)
-                result.placements.append(GridPlacement(filler, x, y))
-                next_identifier += 1
-
     def _first_feasible_position(
         self, grid: OccupancyGrid, module: Module
     ) -> tuple[int, int] | None:

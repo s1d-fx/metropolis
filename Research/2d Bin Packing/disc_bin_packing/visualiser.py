@@ -37,11 +37,13 @@ class GridPackingVisualiser:
         algorithms: dict[str, GridPackingAlgorithm],
         bin: GridBin,
         modules: list[Module],
+        algorithm_groups: dict[str, list[str]] | None = None,
     ) -> None:
         if not algorithms:
             raise ValueError("At least one grid packing algorithm is required.")
 
         self.algorithms = algorithms
+        self.algorithm_groups = algorithm_groups or {"Algorithms": list(algorithms)}
         self.algorithm_name = next(iter(algorithms))
         self.bin = bin
         self.modules = modules
@@ -102,15 +104,15 @@ class GridPackingVisualiser:
         self._numeric_inputs: list[tuple[Slider, TextBox]] = []
         self.width_slider = Slider(
             self.figure.add_axes((slider_left, 0.405, slider_width, 0.025)),
-            "Grid width", 1, 40, self.bin.width, valstep=1,
+            "Grid width", 1, 40, valinit=self.bin.width, valstep=1,
         )
         self.height_slider = Slider(
             self.figure.add_axes((slider_left, 0.365, slider_width, 0.025)),
-            "Grid height", 1, 40, self.bin.height, valstep=1,
+            "Grid height", 1, 40, valinit=self.bin.height, valstep=1,
         )
         self.count_slider = Slider(
             self.figure.add_axes((slider_left, 0.325, slider_width, 0.025)),
-            "Modules", 1, 120, len(self.modules), valstep=1,
+            "Modules", 1, 120, valinit=len(self.modules), valstep=1,
         )
         self.width_slider.on_changed(self._on_bin_size_changed)
         self.height_slider.on_changed(self._on_bin_size_changed)
@@ -129,7 +131,9 @@ class GridPackingVisualiser:
             left = 0.16 if column == 0 else 0.46
             axes = self.figure.add_axes((left, 0.275 - row * 0.045, 0.15, 0.022))
             width, height = size
-            slider = Slider(axes, f"{width}×{height} weight", 0, 10, 1, valstep=1)
+            slider = Slider(
+                axes, f"{width}×{height} weight", 0, 10, valinit=1, valstep=1
+            )
             slider.on_changed(self._on_generation_changed)
             self.weight_sliders[size] = slider
             self._add_numeric_input(slider, left + 0.17, 0.275 - row * 0.045, 0.055)
@@ -148,14 +152,20 @@ class GridPackingVisualiser:
         self.next_button.on_clicked(self._on_next_clicked)
         self.show_all_button.on_clicked(self._on_show_all_clicked)
 
-        algorithm_axes = self.figure.add_axes((0.52, 0.34, 0.20, 0.22))
-        algorithm_axes.set_title("First Feasible", fontsize=9)
-        self.algorithm_selector = RadioButtons(
-            algorithm_axes, list(self.algorithms), active=0, activecolor="tab:blue"
-        )
-        for label in self.algorithm_selector.labels:
-            label.set_fontsize(7)
-        self.algorithm_selector.on_clicked(self._on_algorithm_changed)
+        group_positions = ((0.52, 0.34, 0.20, 0.22),)
+        self.algorithm_selectors: dict[str, RadioButtons] = {}
+        for (group_name, algorithm_names), position in zip(
+            self.algorithm_groups.items(), group_positions
+        ):
+            algorithm_axes = self.figure.add_axes(position)
+            algorithm_axes.set_title(group_name, fontsize=9, pad=5)
+            selector = RadioButtons(
+                algorithm_axes, algorithm_names, active=0, activecolor="tab:blue"
+            )
+            for label in selector.labels:
+                label.set_fontsize(7)
+            selector.on_clicked(self._on_algorithm_changed)
+            self.algorithm_selectors[group_name] = selector
 
     def _add_numeric_input(
         self, slider: Slider, left: float, bottom: float, width: float

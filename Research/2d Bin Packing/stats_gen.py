@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 from random import Random
+from pathlib import Path
+from statistics import fmean, stdev
 from time import perf_counter
 
 import matplotlib.pyplot as plt
 from matplotlib.table import Table
 from matplotlib.ticker import FuncFormatter
-from matplotlib.widgets import Button, Slider
+from matplotlib.widgets import Button, RadioButtons, Slider
 
-from disc_bin_packing.algorithms import FirstFeasibleAlgorithm
+from disc_bin_packing.algorithms import (
+    FirstFeasibleAlgorithm,
+    MaxRectsAlgorithm,
+    NFDHAlgorithm,
+)
+from disc_bin_packing.algorithms.base import GridPackingAlgorithm
 from disc_bin_packing.generation import generate_modules
 from disc_bin_packing.models import MODULE_SIZES, GridBin
 
@@ -19,17 +26,28 @@ DEFAULT_WIDTH = 10
 DEFAULT_HEIGHT = 8
 DEFAULT_MODULE_COUNT = 40
 DEFAULT_TRIALS = 10
+COMPARISON_FIGURE = (
+    Path(__file__).resolve().parent
+    / "disc_bin_packing"
+    / "scaling_experiments"
+    / "Algorithm Comparison.png"
+)
 
 
 class RuntimeExperiment:
     """Run and display repeated packing measurements on demand."""
 
     def __init__(self) -> None:
-        self.algorithm = FirstFeasibleAlgorithm()
+        self.algorithms: dict[str, GridPackingAlgorithm] = {
+            "First Feasible": FirstFeasibleAlgorithm(),
+            "NFDH": NFDHAlgorithm(),
+            "MaxRects (BSSF)": MaxRectsAlgorithm(),
+        }
+        self.algorithm = self.algorithms["First Feasible"]
         self.scaling_figures: list[object] = []
         self.figure, self.results_axes = plt.subplots(figsize=(10, 7))
         self.figure.subplots_adjust(bottom=0.28, top=0.88)
-        self.figure.suptitle("First Feasible Runtime Experiment", fontsize=16)
+        self.figure.suptitle("Algorithmic Experimentation & Comparison", fontsize=16)
 
         self.width_slider = self._add_slider(
             (0.12, 0.20, 0.24, 0.03), "Grid width", 1, 40, DEFAULT_WIDTH
@@ -52,25 +70,36 @@ class RuntimeExperiment:
             DEFAULT_TRIALS,
         )
 
-        util_axes = self.figure.add_axes((0.04, 0.045, 0.20, 0.055))
+        util_axes = self.figure.add_axes((0.02, 0.045, 0.17, 0.055))
         self.util_scaling_button = Button(util_axes, "Generate util scaling")
         self.util_scaling_button.on_clicked(self._on_util_scaling_clicked)
 
-        run_axes = self.figure.add_axes((0.28, 0.045, 0.20, 0.055))
+        run_axes = self.figure.add_axes((0.22, 0.045, 0.17, 0.055))
         self.run_button = Button(run_axes, "Run experiment")
         self.run_button.on_clicked(self._on_run_clicked)
 
-        runtime_axes = self.figure.add_axes((0.52, 0.045, 0.20, 0.055))
+        runtime_axes = self.figure.add_axes((0.42, 0.045, 0.17, 0.055))
         self.runtime_scaling_button = Button(
             runtime_axes, "Generate runtime scaling"
         )
         self.runtime_scaling_button.on_clicked(self._on_runtime_scaling_clicked)
 
-        packed_axes = self.figure.add_axes((0.76, 0.045, 0.20, 0.055))
+        packed_axes = self.figure.add_axes((0.62, 0.045, 0.17, 0.055))
         self.packed_scaling_button = Button(
             packed_axes, "Generate packed scaling"
         )
         self.packed_scaling_button.on_clicked(self._on_packed_scaling_clicked)
+
+        comparison_axes = self.figure.add_axes((0.82, 0.045, 0.16, 0.055))
+        self.comparison_button = Button(comparison_axes, "Compare algorithms")
+        self.comparison_button.on_clicked(self._on_comparison_clicked)
+
+        algorithm_axes = self.figure.add_axes((0.82, 0.42, 0.16, 0.22))
+        algorithm_axes.set_title("Algorithm", fontsize=10, pad=8)
+        self.algorithm_radio = RadioButtons(
+            algorithm_axes, list(self.algorithms), active=0
+        )
+        self.algorithm_radio.on_clicked(self._on_algorithm_selected)
 
         self.table: Table | None = None
         self._show_empty_results()
@@ -118,6 +147,13 @@ class RuntimeExperiment:
             "Average modules packed (%)", "Modules packed scaling", "packed"
         )
 
+    def _on_comparison_clicked(self, _: object) -> None:
+        self._show_algorithm_comparison()
+
+    def _on_algorithm_selected(self, label: str) -> None:
+        self.algorithm = self.algorithms[label]
+        self.run_experiment()
+
     def _module_counts_for_scaling(self) -> list[int]:
         maximum = int(self.module_slider.valmax)
         counts = list(range(1, maximum + 1, 5))
@@ -127,7 +163,7 @@ class RuntimeExperiment:
 
     def _run_measurements(
         self, module_count: int, trial_count: int, random_source: Random
-    ) -> tuple[float, float, float]:
+    ) -> tuple[float, float, float, float]:
         bin = GridBin(int(self.width_slider.val), int(self.height_slider.val))
         weights = {size: 1 for size in MODULE_SIZES}
         runtimes: list[float] = []
@@ -147,9 +183,10 @@ class RuntimeExperiment:
             )
 
         return (
-            sum(runtimes) / trial_count,
-            sum(utilisations) / trial_count,
-            sum(packed_percentages) / trial_count,
+            fmean(runtimes),
+            fmean(utilisations),
+            fmean(packed_percentages),
+            stdev(runtimes) if trial_count > 1 else 0.0,
         )
 
     def _show_scaling_plot(
@@ -159,17 +196,35 @@ class RuntimeExperiment:
         module_counts = self._module_counts_for_scaling()
         random_source = Random()
         values: list[float] = []
+        runtime_standard_deviations: list[float] = []
         for module_count in module_counts:
-            runtime, utilisation, packed = self._run_measurements(
+            runtime, utilisation, packed, runtime_standard_deviation = self._run_measurements(
                 module_count, trial_count, random_source
             )
             values.append(
                 {"runtime": runtime, "utilisation": utilisation, "packed": packed}[metric]
             )
+            runtime_standard_deviations.append(runtime_standard_deviation)
 
         figure, axes = plt.subplots(figsize=(8, 5))
-        axes.plot(module_counts, values, marker="o")
-        axes.set_title(title)
+        if metric == "runtime":
+            axes.errorbar(
+                module_counts,
+                values,
+                yerr=runtime_standard_deviations,
+                fmt="-o",
+                capsize=3,
+                label="Mean runtime ± 1 standard deviation",
+            )
+            axes.legend()
+        else:
+            axes.plot(module_counts, values, marker="o")
+        selected_title = f"{self.algorithm.name}: {title}"
+        axes.set_title(
+            f"{selected_title} (±1 standard deviation)"
+            if metric == "runtime"
+            else selected_title
+        )
         axes.set_xlabel("Module count")
         axes.set_ylabel(y_label)
         if metric in {"utilisation", "packed"}:
@@ -179,6 +234,78 @@ class RuntimeExperiment:
             )
         axes.grid(True, alpha=0.3)
         figure.tight_layout()
+        self.scaling_figures.append(figure)
+        figure.canvas.mpl_connect(
+            "close_event",
+            lambda _: self.scaling_figures.remove(figure)
+            if figure in self.scaling_figures
+            else None,
+        )
+        figure.canvas.draw_idle()
+        plt.show(block=False)
+
+    def _show_algorithm_comparison(self) -> None:
+        """Compare all algorithms on identical random module sequences."""
+        trial_count = int(self.trial_slider.val)
+        module_counts = self._module_counts_for_scaling()
+        values = {
+            name: {"runtime": [], "utilisation": [], "packed": []}
+            for name in self.algorithms
+        }
+        random_source = Random()
+
+        for module_count in module_counts:
+            measurements = {
+                name: {"runtime": [], "utilisation": [], "packed": []}
+                for name in self.algorithms
+            }
+            for _ in range(trial_count):
+                modules = generate_modules(
+                    module_count,
+                    {size: 1 for size in MODULE_SIZES},
+                    random_source=random_source,
+                )
+                bin = GridBin(int(self.width_slider.val), int(self.height_slider.val))
+                for name, algorithm in self.algorithms.items():
+                    start = perf_counter()
+                    result = algorithm.pack(bin, modules)
+                    measurements[name]["runtime"].append(
+                        (perf_counter() - start) * 1_000
+                    )
+                    measurements[name]["utilisation"].append(result.utilisation(bin))
+                    measurements[name]["packed"].append(
+                        (len(modules) - len(result.unpacked)) / module_count
+                    )
+
+            for name in self.algorithms:
+                for metric in values[name]:
+                    values[name][metric].append(fmean(measurements[name][metric]))
+
+        figure, axes = plt.subplots(1, 3, figsize=(15, 4.5), sharex=True)
+        plots = (
+            ("utilisation", "Useful utilisation", True),
+            ("packed", "Requested modules packed", True),
+            ("runtime", "Average runtime (ms)", False),
+        )
+        for axes_item, (metric, label, as_percentage) in zip(axes, plots):
+            for name in self.algorithms:
+                axes_item.plot(module_counts, values[name][metric], marker="o", label=name)
+            axes_item.set_title(label)
+            axes_item.set_xlabel("Module count")
+            axes_item.grid(True, alpha=0.3)
+            if as_percentage:
+                axes_item.set_ylim(0, 1)
+                axes_item.yaxis.set_major_formatter(
+                    FuncFormatter(lambda value, _: f"{value:.0%}")
+                )
+            else:
+                axes_item.set_ylabel(label)
+
+        axes[0].set_ylabel("Average proportion")
+        axes[2].legend()
+        figure.suptitle("Algorithm comparison: identical input sequences")
+        figure.tight_layout()
+        figure.savefig(COMPARISON_FIGURE, dpi=180, bbox_inches="tight")
         self.scaling_figures.append(figure)
         figure.canvas.mpl_connect(
             "close_event",
@@ -242,7 +369,7 @@ class RuntimeExperiment:
         self.results_axes.clear()
         self.results_axes.axis("off")
         self.results_axes.set_title(
-            f"{width} × {height} grid | {module_count} modules | "
+            f"{self.algorithm.name} | {width} × {height} grid | {module_count} modules | "
             f"{len(measurements)} trials",
             pad=12,
         )
@@ -272,7 +399,7 @@ class RuntimeExperiment:
             loc="center",
             cellLoc="center",
             colWidths=[0.14, 0.27, 0.27, 0.32],
-            bbox=(0.08, 0.02, 0.84, 0.98),
+            bbox=(0.02, 0.02, 0.74, 0.98),
         )
         self.table.auto_set_font_size(False)
         row_count = len(table_data)
