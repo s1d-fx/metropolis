@@ -153,13 +153,13 @@ The placement process is shown in the animation below:
 
 The scaling experiments produced the following graphs using a fixed 10 × 8 grid/bin:
 
-![Runtime scaling](disc_bin_packing/scaling%20experiment/Runtime%20Scaling.png)
+![Runtime scaling](disc_bin_packing/scaling_experiments/runtime_scaling.png)
 
-![Utilisation scaling](disc_bin_packing/scaling%20experiment/Utilisation%20Scaling.png)
+![Utilisation scaling](disc_bin_packing/scaling_experiments/utilisation_scaling.png)
 
-![Packed-module scaling](disc_bin_packing/scaling%20experiment/Packed%20Scaling.png)
+![Modules packed scaling](disc_bin_packing/scaling_experiments/modules_packed_scaling.png)
 
-![Convergence point](disc_bin_packing/scaling%20experiment/Convergence_Point.png)
+![First Feasible runtime experiment](disc_bin_packing/scaling_experiments/first_feasible_runtime_experiment.png)
 
 ### 6.2 Experimental Observations
 
