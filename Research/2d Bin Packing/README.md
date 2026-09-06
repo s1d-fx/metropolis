@@ -19,7 +19,7 @@ continuous, allowing shapes to be placed at arbitrary coordinates within a
 container. Although this is useful for general bin-packing problems, it does
 not directly suit the intended use case in Blender Geometry Nodes, where
 building facades are represented by a controlled, discrete grid. A continuous
-First Fit prototype is retained in the `cont_bin_packing` folder, while
+Next Fit prototype is retained in the `cont_bin_packing` folder, while
 discrete versions of NFDH and MaxRects were implemented for comparison.
 
 The main implementation is contained in the `disc_bin_packing` folder. It
@@ -131,17 +131,18 @@ inspected without restarting the visualiser.
 The `stats_gen.py` script is a separate quantitative experiment. It can run
 up to 30 trials for a set grid size and module count, then reports runtime,
 utilisation, and the proportion of requested modules successfully packed for
-each trial. It also has options generate scaling graphs for each of these measures 
+each trial. It also has options to generate scaling graphs for each of these measures
 as the module count changes.
 
 For the scaling plots, I used a 10 × 8 grid, 10 trials per module count, and
 equal weights for each permitted module size. Module counts start at 1 and then
-increase in steps of 5 up to a final point at 120. The default seed is 2026,
-so repeating the same experiment produces the same generated module sequences.
-The seed can be changed from the command line with
-`python stats_gen.py --seed 1234`.
-Packing metrics are therefore repeatable; measured runtime can still vary
-slightly with system load.
+increase in steps of 5 up to a final point at 120. The default base seed is 2026. Each action advances a run counter and uses
+`base seed + (run number - 1)`, so clicking Run experiment again produces a new input
+distribution. The active seed and run number are shown in the interface. The
+base seed can be changed from the command line with
+`python stats_gen.py --seed 1234`. To reproduce a result, use the same base
+seed and the same run number. Packing metrics are therefore repeatable;
+measured runtime can still vary slightly with system load.
 
 Runtime measures only the call to the packing algorithm; the runtime plot
 shows the mean with error bars of ±1 standard deviation.

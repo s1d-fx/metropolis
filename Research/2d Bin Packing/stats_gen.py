@@ -1,4 +1,4 @@
-"""Interactive runtime and utilisation experiments for First Feasible packing."""
+"""Interactive runtime and utilisation experiments for discrete packing algorithms."""
 
 from __future__ import annotations
 
@@ -40,7 +40,9 @@ class RuntimeExperiment:
     """Run and display repeated packing measurements on demand."""
 
     def __init__(self, *, seed: int = DEFAULT_SEED) -> None:
-        self.seed = seed
+        self.base_seed = seed
+        self.run_number = 0
+        self.current_seed = seed
         self.algorithms: dict[str, GridPackingAlgorithm] = {
             "First Feasible": FirstFeasibleAlgorithm(),
             "NFDH": NFDHAlgorithm(),
@@ -157,6 +159,12 @@ class RuntimeExperiment:
         self.algorithm = self.algorithms[label]
         self.run_experiment()
 
+    def _begin_run(self) -> int:
+        """Advance to a reproducible but distinct seed for the next action."""
+        self.current_seed = self.base_seed + self.run_number
+        self.run_number += 1
+        return self.current_seed
+
     def _module_counts_for_scaling(self) -> list[int]:
         maximum = int(self.module_slider.valmax)
         counts = list(range(1, maximum + 1, 5))
@@ -197,7 +205,8 @@ class RuntimeExperiment:
     ) -> None:
         trial_count = int(self.trial_slider.val)
         module_counts = self._module_counts_for_scaling()
-        random_source = Random(self.seed)
+        run_seed = self._begin_run()
+        random_source = Random(run_seed)
         values: list[float] = []
         runtime_standard_deviations: list[float] = []
         for module_count in module_counts:
@@ -228,6 +237,7 @@ class RuntimeExperiment:
             if metric == "runtime"
             else selected_title
         )
+        figure.suptitle(f"Seed {run_seed} | Run {self.run_number}")
         axes.set_xlabel("Module count")
         axes.set_ylabel(y_label)
         if metric in {"utilisation", "packed"}:
@@ -255,7 +265,8 @@ class RuntimeExperiment:
             name: {"runtime": [], "utilisation": [], "packed": []}
             for name in self.algorithms
         }
-        random_source = Random(self.seed)
+        run_seed = self._begin_run()
+        random_source = Random(run_seed)
 
         for module_count in module_counts:
             measurements = {
@@ -306,7 +317,10 @@ class RuntimeExperiment:
 
         axes[0].set_ylabel("Average proportion")
         axes[2].legend()
-        figure.suptitle("Algorithm comparison: identical input sequences")
+        figure.suptitle(
+            f"Algorithm comparison: identical input sequences | "
+            f"Seed {run_seed} | Run {self.run_number}"
+        )
         figure.tight_layout()
         figure.savefig(COMPARISON_FIGURE, dpi=180, bbox_inches="tight")
         self.scaling_figures.append(figure)
@@ -328,7 +342,8 @@ class RuntimeExperiment:
         bin = GridBin(width, height)
         weights = {size: 1 for size in MODULE_SIZES}
         measurements: list[tuple[int, float, float, int]] = []
-        random_source = Random(self.seed)
+        run_seed = self._begin_run()
+        random_source = Random(run_seed)
 
         for trial in range(1, trial_count + 1):
             modules = generate_modules(
@@ -373,7 +388,8 @@ class RuntimeExperiment:
         self.results_axes.axis("off")
         self.results_axes.set_title(
             f"{self.algorithm.name} | {width} × {height} grid | {module_count} modules | "
-            f"{len(measurements)} trials",
+            f"{len(measurements)} trials | Seed {self.current_seed} | "
+            f"Run {self.run_number}",
             pad=12,
         )
         table_data = [["Trial", "Runtime (ms)", "Utilisation", "Modules packed"]]
