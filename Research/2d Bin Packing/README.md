@@ -1,4 +1,3 @@
-
 # An Investigation into 2D Bin Packing
 
 ## Abstract
@@ -154,13 +153,13 @@ The placement process is shown in the animation below:
 
 The scaling experiments produced the following graphs using a fixed 10 × 8 grid/bin:
 
-![Runtime scaling](Runtime%20Scaling.png)
+![Runtime scaling](disc_bin_packing/scaling%20experiment/Runtime%20Scaling.png)
 
-![Utilisation scaling](Utilisation%20Scaling.png)
+![Utilisation scaling](disc_bin_packing/scaling%20experiment/Utilisation%20Scaling.png)
 
-![Packed-module scaling](Packed%20Scaling.png)
+![Packed-module scaling](disc_bin_packing/scaling%20experiment/Packed%20Scaling.png)
 
-![Convergence point](Convergence_Point.png)
+![Convergence point](disc_bin_packing/scaling%20experiment/Convergence_Point.png)
 
 ### 6.2 Experimental Observations
 
