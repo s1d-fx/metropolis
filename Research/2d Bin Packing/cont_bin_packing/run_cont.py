@@ -2,7 +2,7 @@
 
 from random import Random
 
-from cont_bin_packing.algorithms import BottomLeftAlgorithm, NoPackingAlgorithm
+from cont_bin_packing.algorithms import NextFitAlgorithm, NoPackingAlgorithm
 from cont_bin_packing.generation import generate_rectangles
 from cont_bin_packing.models import Bin
 from cont_bin_packing.visualiser import PackingVisualiser
@@ -20,7 +20,7 @@ def main() -> None:
     )
     visualiser = PackingVisualiser(
         algorithms={
-            "Bottom-Left": BottomLeftAlgorithm(),
+            "Next Fit": NextFitAlgorithm(),
             "No packing": NoPackingAlgorithm(),
         },
         bin=Bin(width=40, height=30),

@@ -1,4 +1,4 @@
-"""The Bottom-Left heuristic for packing rectangles into one 2D bin."""
+"""The Next Fit heuristic for packing rectangles into one 2D bin."""
 
 from __future__ import annotations
 
@@ -6,27 +6,27 @@ from cont_bin_packing.algorithms.base import PackingAlgorithm
 from cont_bin_packing.models import Bin, PackingResult, Placement, Rectangle
 
 
-class BottomLeftAlgorithm(PackingAlgorithm):
-    """Place each rectangle as low, then as far left, as possible.
+class NextFitAlgorithm(PackingAlgorithm):
+    """Place each rectangle at the next available position.
 
     Rectangles are considered in their input order and are not rotated.  For a
     rectangle, candidate coordinates are made from the bin's left/bottom edges
     and the right/top edges of already placed rectangles.  From every feasible
-    candidate, Bottom-Left selects the one with the smallest ``y`` coordinate;
+    candidate, Next Fit selects the one with the smallest ``y`` coordinate;
     equal-height candidates are resolved by the smallest ``x`` coordinate.
 
     This packs into exactly one bin.  A rectangle that cannot fit is returned
     in ``PackingResult.unpacked``.
     """
 
-    name = "Bottom-Left"
+    name = "Next Fit"
     _EPSILON = 1e-9
 
     def pack(self, bin: Bin, rectangles: list[Rectangle]) -> PackingResult:
         result = PackingResult()
 
         for rectangle in rectangles:
-            position = self._bottom_left_position(bin, rectangle, result.placements)
+            position = self._next_fit_position(bin, rectangle, result.placements)
             if position is None:
                 result.unpacked.append(rectangle)
                 continue
@@ -36,7 +36,7 @@ class BottomLeftAlgorithm(PackingAlgorithm):
 
         return result
 
-    def _bottom_left_position(
+    def _next_fit_position(
         self,
         bin: Bin,
         rectangle: Rectangle,
