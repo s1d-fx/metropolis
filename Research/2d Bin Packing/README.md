@@ -37,7 +37,7 @@ number of identical rectangular bins of width *w* and height *h* [1]. It can be 
 in areas such as cutting materials, loading and transportation, where objects cannot
 overlap and need to be arranged efficiently.
 
-In the classical 2D-BPP, the primary objective is to minimise the number of bins 
+In the classical 2D-BPP, the goal is to minimise the number of bins 
 required to accommodate all items. In my case, the problem is slightly different.
 
 ### 2.2 Exact Algorithms
