@@ -196,23 +196,23 @@ sequence of modules into the grid.*
 
 The scaling experiments produced the following graphs using a fixed 10 × 8 grid/bin:
 
-![Runtime scaling](disc_bin_packing/scaling_experiments/Runtime%20Scaling.png)
+![Runtime scaling](disc_bin_packing/Scaling_Experiments/Runtime%20Scaling.png)
 
 *Figure 5. Mean packing runtime as module count increases, shown separately for each algorithm across 10 trials.*
 
-![Utilisation scaling](disc_bin_packing/scaling_experiments/Utilisation%20Scaling.png)
+![Utilisation scaling](disc_bin_packing/Scaling_Experiments/Utilisation%20Scaling.png)
 
 *Figure 6. Mean useful utilisation as module count increases, shown separately for each algorithm on a fixed 10 × 8 grid.*
 
-![Modules packed scaling](disc_bin_packing/scaling_experiments/Packed%20Scaling.png)
+![Modules packed scaling](disc_bin_packing/Scaling_Experiments/Packed%20Scaling.png)
 
 *Figure 7. Mean proportion of requested modules successfully packed as module count increases, shown separately for each algorithm.*
 
-![Algorithm runtime experiment](disc_bin_packing/scaling_experiments/Convergence_Point.png)
+![Algorithm runtime experiment](disc_bin_packing/Scaling_Experiments/Convergence_Point.png)
 
 *Figure 8. An 18-trial runtime experiment for 25 requested modules on a 10 × 8 grid, shown separately for each algorithm.*
 
-![Algorithm comparison](disc_bin_packing/scaling_experiments/Algorithm%20Comparison.png)
+![Algorithm comparison](disc_bin_packing/Scaling_Experiments/Algorithm%20Comparison.png)
 
 *Figure 9. Controlled comparison of First Feasible, NFDH, and MaxRects (BSSF) on
 the same generated module sequences.*
